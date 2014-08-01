@@ -108,6 +108,7 @@ echo $OUTPUT->heading('Yay! It works!');
 echo "<div id='threedmodelContainer'></div>";
 $PAGE->requires->js( new moodle_url($CFG->wwwroot . '/mod/threedmodel/lib/three.min.js') );
 $PAGE->requires->js( new moodle_url($CFG->wwwroot . '/mod/threedmodel/lib/ColladaLoader.js') );
+$PAGE->requires->js( new moodle_url($CFG->wwwroot . '/mod/threedmodel/lib/OrbitControls.js') );
 
 $PAGE->requires->js_init_call('M.mod_threedmodel.init', array((string)$fullurl));
 
