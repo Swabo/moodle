@@ -91,12 +91,17 @@ M.qtype_threedmodel.init = function(Y, fullurl) {
     function initWebGl() {
 
         var container = document.createElement('div');
+        container.setAttribute('id','resizeDiv');
+        container.setAttribute('style','height: 400px;width: auto;border: 1px solid black;background-color:#8DD5E7;position: relative;padding: 1em;margin: 2em;');
         //  document.body.appendChild(container);
         Y.one('#threedmodelContainer').appendChild(container);
 
 
-        Y.one('#threedmodelContainer').setStyle('width', '100%');
-        Y.one('#threedmodelContainer').setStyle('height', '100%');
+        Y.one('#threedmodelContainer').setStyle('width', 'auto');
+        //  Y.one('#threedmodelContainer').setStyle('height', '100%');
+        Y.one('#threedmodelContainer').setStyle('min-height', '500px');
+//        Y.one('#threedmodelContainer').setStyle('resize', 'both');
+//        Y.one('#threedmodelContainer').setStyle('overflow', 'auto');
 
         var canvasWidth = parseInt(Y.one('#threedmodelContainer').get("offsetWidth"));
         var canvasHeight = parseInt(Y.one('#threedmodelContainer').get("offsetHeight"));
@@ -179,6 +184,16 @@ M.qtype_threedmodel.init = function(Y, fullurl) {
 
         container.appendChild(renderer.domElement);
 
+YUI().use('resize');
+
+YUI().use('resize', function(Y) {
+    var resize = new Y.Resize({
+        //Selector of the node to resize
+        node: '#resizeDiv'
+    });   
+});
+
+
         var models = model.children;
 
         for (var i = 0; i < models.length; i++) {
@@ -221,9 +236,9 @@ M.qtype_threedmodel.init = function(Y, fullurl) {
 
     });
 
-        Y.one('#threedmodelContainer').on('click', function(event) {
-            console.log(event);
-        });
+    Y.one('#threedmodelContainer').on('click', function(event) {
+        console.log(event);
+    });
 
     function onMouseDown(event)
     {
