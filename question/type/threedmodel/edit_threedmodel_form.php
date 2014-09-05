@@ -38,6 +38,10 @@ class qtype_threedmodel_edit_form extends question_edit_form {
      *
      * @param MoodleQuickForm $mform the form being built.
      */
+    public function qtype() {
+        return 'threedmodel';
+    }
+
     protected function definition_inner($mform) {
         // We don't need this default element.
         $mform->removeElement('defaultmark');
@@ -48,13 +52,54 @@ class qtype_threedmodel_edit_form extends question_edit_form {
         $filemanager_options['accepted_types'] = '*';
         $filemanager_options['maxbytes'] = 0;
         $filemanager_options['maxfiles'] = 10;
-        //$filemanager_options['mainfile'] = true;
+        // $filemanager_options['mainfile'] = true;
 
-        $mform->addElement('filemanager', 'files', get_string('selectfiles'), null, $filemanager_options);
+        $mform->addElement('filemanager', 'threedmodel', get_string('selectfiles'), null, $filemanager_options);
     }
 
-    public function qtype() {
-        return 'threedmodel';
+    public function data_preprocessing($question) {
+        $question = parent::data_preprocessing($question);
+        $question = $this->data_preprocessing_hints($question);
+
+        $draftitemid = file_get_submitted_draft_itemid('threedmodel');
+
+        $filemanager_options = array();
+        $filemanager_options['accepted_types'] = '*';
+        $filemanager_options['maxbytes'] = 0;
+        $filemanager_options['maxfiles'] = 10;
+
+        file_prepare_draft_area($draftitemid, $this->context->id, 'qtype_threedmodel', 'threedmodel', !empty($question->id) ? (int) $question->id : null, $filemanager_options);
+        $question->threedmodel = $draftitemid;
+
+
+        return $question;
+    }
+
+    function validation($data, $files) {
+        global $USER;
+
+        $errors = parent::validation($data, $files);
+
+        $usercontext = context_user::instance($USER->id);
+        $fs = get_file_storage();
+        if (!$files = $fs->get_area_files($usercontext->id, 'user', 'draft', $data['threedmodel'], 'sortorder, id', false)) {
+            $errors['files'] = get_string('required');
+            return $errors;
+        }
+        if (count($files) == 1) {
+            // no need to select main file if only one picked
+            return $errors;
+        } else if (count($files) > 1) {
+            foreach ($files as $file) {
+                if (strtolower(pathinfo($file->get_filename(), PATHINFO_EXTENSION)) === 'dae') {
+                    $file->set_sortorder(1);
+                    break;
+                } else {
+                    // TODO: falls letztes $file: zurück zum Formular
+                }
+            }
+        }
+        return $errors;
     }
 
 }

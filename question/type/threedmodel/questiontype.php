@@ -60,7 +60,7 @@ class qtype_threedmodel extends question_type {
         global $DB, $USER;
 
 
-        file_save_draft_area_files($formdata->files, $formdata->context->id, 'qtype_threedmodel', 'threedmodel', $formdata->id, array('subdirs' => 1, 'maxbytes' => 0, 'maxfiles' => 10));
+        file_save_draft_area_files($formdata->threedmodel, $formdata->context->id, 'qtype_threedmodel', 'threedmodel', $formdata->id, array('subdirs' => 1, 'maxbytes' => 0, 'maxfiles' => 10));
     }
 
     public function actual_number_of_questions($question) {

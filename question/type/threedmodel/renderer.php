@@ -36,21 +36,19 @@ class qtype_threedmodel_renderer extends qtype_renderer {
     public function formulation_and_controls(question_attempt $qa, question_display_options $options) {
         global $PAGE;
         global $CFG;
-        $model_file_url = self::get_model_url($qa, 'threedmodel');
+        $model_file_urls = self::get_model_urls($qa, 'threedmodel');
 
-        $htmlCode = '';
+      //  $PAGE->requires->css('/question/type/threedmodel/threedmodel_styles.css');
+        $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/question/type/threedmodel/lib/three.min.js'));
+        $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/question/type/threedmodel/lib/ColladaLoader.js'));
+        $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/question/type/threedmodel/lib/OrbitControls.js'));
+        $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/question/type/threedmodel/lib/TransformControls.js'));
+        $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/question/type/threedmodel/lib/dat.gui.js'));
 
-        if ($model_file_url) {
-            $htmlCode .= $model_file_url;
-        }
+//        $PAGE->requires->js_init_call('M.qtype_threedmodel.dddm.init', $model_file_urls);
+        $PAGE->requires->yui_module('moodle-qtype_threedmodel-threedmodel', 'M.qtype_threedmodel.threedmodel.init', array($model_file_urls));
 
-        $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/mod/threedmodel/lib/three.min.js'));
-        $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/mod/threedmodel/lib/ColladaLoader.js'));
-        $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/mod/threedmodel/lib/OrbitControls.js'));
-
-        $PAGE->requires->js_init_call('M.qtype_threedmodel.init', array((string) $model_file_url));
-
-        //      return '<div>'.$htmlCode.'</div>';
+        //      return '<div>'.''.'</div>';
         return html_writer::tag('div', '', array('id' => 'threedmodelContainer'));
     }
 
@@ -58,7 +56,7 @@ class qtype_threedmodel_renderer extends qtype_renderer {
         return get_string('informationtext', 'qtype_threedmodel');
     }
 
-    protected static function get_model_url(question_attempt $qa, $filearea, $itemid = 0) {
+    protected static function get_model_urls(question_attempt $qa, $filearea, $itemid = 0) {
         $question = $qa->get_question();
         $qubaid = $qa->get_usage_id();
         $slot = $qa->get_slot();
@@ -67,14 +65,15 @@ class qtype_threedmodel_renderer extends qtype_renderer {
             $itemid = $question->id;
         }
         $componentname = $question->qtype->plugin_name();
-        $draftfiles = $fs->get_area_files($question->contextid, $componentname, $filearea, $itemid, 'id');
+        $draftfiles = $fs->get_area_files($question->contextid, $componentname, $filearea, $itemid, 'sortorder DESC');
         if ($draftfiles) {
             foreach ($draftfiles as $file) {
                 if ($file->is_directory()) {
                     continue;
                 }
-                $url = moodle_url::make_pluginfile_url($question->contextid, $componentname, $filearea, "$qubaid/$slot/{$itemid}", '/', $file->get_filename());
-                return $url->out();
+                $baseurl = moodle_url::make_pluginfile_url($question->contextid, $componentname, $filearea, "$qubaid/$slot/{$itemid}", '/', '');
+                // $fullurl = moodle_url::make_pluginfile_url($question->contextid, $componentname, $filearea, "$qubaid/$slot/{$itemid}", '/', $file->get_filename());
+                return array('model_base_url' => $baseurl->out(), 'model_file_name' => $file->get_filename());
             }
         }
         return null;

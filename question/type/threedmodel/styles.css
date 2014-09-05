@@ -1,0 +1,17 @@
+#resizeBox {
+    position:relative;
+    height:400px;
+    width:auto !important;
+}
+
+#threedmodelContainer .dg.main {
+    position:absolute;
+    z-index:1050;
+}
+
+#threedmodelContainer .dg .dg_move_object, #threedmodelContainer .dg .dg_toggle_object {
+    line-height: 27px;
+    border-left: 1px solid rgb(44,44,44);
+    padding: 0px 3px;
+}
+

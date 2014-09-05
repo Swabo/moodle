@@ -30,7 +30,7 @@ defined('MOODLE_INTERNAL') || die();
 debugging('lib.php aufgerufen');
 
 /**
- * Checks file access for ddimageortext questions.
+ * Checks file access for threedmodel questions.
  */
 function qtype_threedmodel_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options=array()) {
     global $CFG;
