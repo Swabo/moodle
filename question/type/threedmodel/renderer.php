@@ -41,6 +41,7 @@ class qtype_threedmodel_renderer extends qtype_renderer {
       //  $PAGE->requires->css('/question/type/threedmodel/threedmodel_styles.css');
         $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/question/type/threedmodel/lib/three.min.js'));
         $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/question/type/threedmodel/lib/ColladaLoader.js'));
+        $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/question/type/threedmodel/lib/threex.domevents.js'));
         $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/question/type/threedmodel/lib/OrbitControls.js'));
         $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/question/type/threedmodel/lib/TransformControls.js'));
         $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/question/type/threedmodel/lib/dat.gui.js'));

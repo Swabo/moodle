@@ -18,11 +18,9 @@ YUI.add('moodle-qtype_threedmodel-threedmodel', function(Y) {
         this.play_animation = true;
 
         this.orbitControls;
-        this.projector;
         this.transControls;
-        this.modelParts = [];
-        this.selected;
-        this.hoveredModelPart;
+
+        this.domEvents;
 
         this.loadColladaModel(params.model_base_url, params.model_file_name);
     };
@@ -89,21 +87,11 @@ YUI.add('moodle-qtype_threedmodel-threedmodel', function(Y) {
         var canvasWidth = parseInt(this.threedmodelContainer.get("offsetWidth"));
         var canvasHeight = 400;
 
-        this.setupScene(canvasWidth / canvasHeight);
-
         // Renderer
         this.renderer = new THREE.WebGLRenderer({antialias: true});
         this.renderer.setSize(canvasWidth, canvasHeight, false);
 
-        // Controls
-        this.orbitControls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-        this.transControls = new THREE.TransformControls(this.camera, this.renderer.domElement);
-        this.transControls.addEventListener('change', DDDM.render);
-
-        // Projector for TransControls
-        this.projector = new THREE.Projector();
-        // this.getModelHierarchy(this.colladaScene.children);
-
+        this.setupScene(canvasWidth / canvasHeight);
         this.setupHTML();
 
         this.start();
@@ -115,14 +103,33 @@ YUI.add('moodle-qtype_threedmodel-threedmodel', function(Y) {
         this.scene = new THREE.Scene();
 
         // Camera
-        this.camera = new THREE.PerspectiveCamera(40, canvasAspect, 1, 10000);
-        this.camera.position.set(0, 0, 1000);
+        this.camera = new THREE.PerspectiveCamera(40, canvasAspect, 0.1, 20000);
+        this.camera.position.set(0, 200, 1000);
         this.camera.lookAt(this.scene.position);
+
+        // Controls
+        this.orbitControls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+        this.transControls = new THREE.TransformControls(this.camera, this.renderer.domElement);
+        this.transControls.addEventListener('change', DDDM.render);
 
         // Light
         var pointLight = new THREE.PointLight(0xffffff, 1.75);
         pointLight.position = this.camera.position;
         this.scene.add(pointLight);
+
+        // SkyCube        
+        var skyGeometry = new THREE.BoxGeometry(10000, 10000, 10000);
+        var skyMaterial = new THREE.MeshBasicMaterial({color: 0x999999, side: THREE.BackSide});
+        var skyCube = new THREE.Mesh(skyGeometry, skyMaterial);
+        skyCube.position.set(0, 0, 0);
+        this.scene.add(skyCube);
+
+        // THREEx.DomEvents
+        this.domEvents = new THREEx.DomEvents(this.camera, this.renderer.domElement);
+        this.domEvents.addEventListener(skyCube, 'click', function() {
+            DDDM.orbitControls.enabled = true;
+            DDDM.scene.remove(DDDM.transControls);
+        }, false);
 
         // KeyFrame Animations
         var animHandler = THREE.AnimationHandler;
@@ -146,88 +153,87 @@ YUI.add('moodle-qtype_threedmodel-threedmodel', function(Y) {
         DDDM.threedmodelContainer.appendChild(gui.domElement);
 
         var guiConfig = {
-            play_animation: true,
             resetScene: function() {
                 location.reload();
             }
         };
-        gui.add(guiConfig, 'play_animation', true).onChange(function() {
-            DDDM.play_animation === true ? DDDM.play_animation = false : DDDM.play_animation = true;
-        });
-        gui.add(guiConfig, 'resetScene');
+        gui.add(DDDM, 'play_animation').name('Play animations');
+        gui.add(guiConfig, 'resetScene').name('Reset Scene');
+        var modelPartsFolder = gui.addFolder('Modelparts');
+        Y.one(modelPartsFolder.domElement).addClass('model_parts');
 
-        var mainFolder = gui.addFolder('Modelparts');
-
-        var generateCallback = function(model) {
-
-            return function() {
-                // DDDM.toggleObject(model);
-                console.log(model);
-//                DDDM.orbitControls.enabled = false;
-//                DDDM.transControls.attach(model);
-//                DDDM.scene.add(DDDM.transControls);
-            };
-
-        };
-
-//        for (var i = 0; i < DDDM.modelParts.length; i++) {
-//
-//            var partName = DDDM.modelParts[i].name === '' ? DDDM.modelParts[i].id : DDDM.modelParts[i].name;
-//
-//            guiConfig[partName] = generateCallback(i);
-//            folder.add(guiConfig, partName);
-//        }
-        setupGuiModelParts(DDDM.colladaScene.children, mainFolder);
-
-        function setupGuiModelParts(models, parentGuiFolder) {
-
-            for (var i = 0; i < models.length; i++) {
-
-                var model = models[i];
-                if (model.children.length > 0) {
-//                    var partName = model.name === '' ? model.id : model.name;
-//
-//                    guiConfig[partName] = generateCallback(model);
-//                    parentGuiFolder.add(guiConfig, partName);
-
-                    //  var folder = parentGuiFolder.addFolder(model.uuid + ' - ' + model.name);
-                    var folder = parentGuiFolder.addFolder(model.name);
-                    setupGuiModelParts(model.children, folder);
-
+        DDDM.colladaScene.parent.userData['ownFolder'] = modelPartsFolder;
+        // recursivly setup model parts in scene hierarchy
+        var setupModelPart = function(model) {
+            // is branch
+            if (model.children.length > 0) {
+                var folderName = model.name === '' ? model.id : model.name;
+                model.userData['parentFolder'] = model.parent.userData['ownFolder'];
+                try {
+                    model.userData['ownFolder'] = model.userData['parentFolder'].addFolder(folderName);
                 }
-                else {
-                    DDDM.modelParts.push(model);
-
-                    var partName = model.name === '' ? model.id : model.name;
-
-                    guiConfig[partName] = generateCallback(model);
-                    var blatt = parentGuiFolder.add(guiConfig, partName);
-
-                    var dg_move_object = Y.Node.create('<span>move</span>');
-                    dg_move_object.addClass('dg_move_object');
-                    dg_move_object.on('click', function() {
-                        DDDM.orbitControls.enabled = false;
-                        DDDM.transControls.attach(model);
-                        DDDM.scene.add(DDDM.transControls);
-                    });
-                    Y.one(blatt.domElement).appendChild(dg_move_object);
-
-
-
-                    var dg_toggle_object = Y.Node.create('<span>toggle</span>');
-                    dg_toggle_object.addClass('dg_toggle_object');
-                    dg_toggle_object.on('click', function() {
-                        DDDM.toggleObject(model);
-                    });
-                    Y.one(blatt.domElement).appendChild(dg_toggle_object);
-
-
+                catch (e)
+                {
+                    console.log(e);
+                    DDDM.printError(e.message);
+                    model.userData['ownFolder'] = model.userData['parentFolder'].addFolder(folderName + model.uuid);
                 }
             }
-        }
+            // is leaf
+            else {
+                // modelPart is a light
+                if (model instanceof THREE.Light) {
+                    model.visible = false;
+                }
+                var originalMaterial = model.material;
+                var hoverMaterial = new THREE.MeshBasicMaterial({color: 0xff0000});
+
+                // Event listeners for 3D-Space 
+                DDDM.domEvents.addEventListener(model, 'mouseover', setHoverMaterial, false);
+                DDDM.domEvents.addEventListener(model, 'mouseout', setOriginalMaterial, false);
+                DDDM.domEvents.addEventListener(model, 'click', onClickMove, false);
+
+                model.userData['parentFolder'] = model.parent.userData['ownFolder'];
+
+                var leafName = model.name === '' ? model.parent.name : model.name;
+                // add dummy function to prevent default datGui behaviour
+                guiConfig[model.uuid] = function() {
+                };
+                // add leave with custom buttons to datGui
+                var leaf = model.userData['parentFolder'].add(guiConfig, model.uuid).name(leafName);
+                var dg_move_object = Y.Node.create('<span class="dg_move_object">move</span>');
+                Y.one(leaf.domElement).appendChild(dg_move_object);
+                var dg_toggle_object = Y.Node.create('<span clas="dg_toggle_object">toggle</span>');
+                Y.one(leaf.domElement).appendChild(dg_toggle_object);
+
+                // add custom event listeners to datGui
+                Y.one(leaf.__li).on('mouseover', setHoverMaterial, false);
+                Y.one(leaf.__li).on('mouseleave', setOriginalMaterial, false);
+                dg_move_object.on('click', onClickMove);
+                dg_toggle_object.on('click', onClickToggle);
+            }
+
+            function setHoverMaterial() {
+                model.material = hoverMaterial;
+            }
+            function setOriginalMaterial() {
+                model.material = originalMaterial;
+            }
+            function onClickMove() {
+                DDDM.orbitControls.enabled = false;
+                DDDM.transControls.attach(model);
+                DDDM.scene.add(DDDM.transControls);
+            }
+            function onClickToggle() {
+                model.traverse(function(object) {
+                    object.visible = !object.visible;
+                });
+            }
+        };
+        DDDM.colladaScene.traverse(setupModelPart);
 
 
-        // TODO: css "flexibel" machen, u.A. height als Konstante!
+        // Resize Box
         var resizeBox = Y.Node.create('<div id="resizeBox"></div>');
         Y.use('resize-plugin', function() {
             resizeBox.plug(Y.Plugin.Resize);
@@ -235,13 +241,9 @@ YUI.add('moodle-qtype_threedmodel-threedmodel', function(Y) {
         });
 
         window.addEventListener('resize', DDDM.onCanvasResize);
-        DDDM.renderer.domElement.addEventListener('click', DDDM.onSelectObject, false);
-        DDDM.renderer.domElement.addEventListener('mousemove', DDDM.onHoverObject, false);
 
         resizeBox.appendChild(DDDM.renderer.domElement);
         DDDM.threedmodelContainer.appendChild(resizeBox);
-
-
     };
 
     DDDM.onCanvasResize = function() {
@@ -251,96 +253,6 @@ YUI.add('moodle-qtype_threedmodel-threedmodel', function(Y) {
         DDDM.camera.updateProjectionMatrix();
 
         DDDM.renderer.setSize(canvasWidth, canvasHeight, false);
-    };
-
-    DDDM.onSelectObject = function(event) {
-        var intersects = DDDM.findIntersections(event);
-
-//        if (intersects.length > 0) {
-//            DDDM.orbitControls.enabled = false;
-//            DDDM.selected = intersects[ 0 ].object;
-//            DDDM.transControls.attach(DDDM.selected);
-//            DDDM.scene.add(DDDM.transControls);
-//        }
-//        else {
-//            DDDM.scene.remove(DDDM.transControls);
-//            DDDM.orbitControls.enabled = true;
-//        }
-
-        // hit on model part
-        if (intersects.length > 0) {
-            // hit on different model part than previously selected or no previously selected
-            if (DDDM.selected !== intersects[ 0 ].object) {
-                DDDM.selected = intersects[ 0 ].object;
-                DDDM.orbitControls.enabled = false;
-                DDDM.transControls.attach(DDDM.selected);
-                DDDM.scene.add(DDDM.transControls);
-            }
-        }
-        // no hit on model part
-        else {
-            // no previously selected model part
-            if (!DDDM.selected) {
-                DDDM.scene.remove(DDDM.transControls);
-                DDDM.orbitControls.enabled = true;
-            }
-            DDDM.selected = null;
-        }
-    };
-
-
-    DDDM.onHoverObject = function(event) {
-        var intersects = DDDM.findIntersections(event);
-        if (intersects.length > 0) {
-
-            if (DDDM.hoveredModelPart !== intersects[ 0 ].object) {
-
-                if (DDDM.hoveredModelPart)
-                    DDDM.hoveredModelPart.material.emissive.setHex(DDDM.hoveredModelPart.currentHex);
-
-                DDDM.hoveredModelPart = intersects[ 0 ].object;
-                DDDM.hoveredModelPart.currentHex = DDDM.hoveredModelPart.material.emissive.getHex();
-                DDDM.hoveredModelPart.material.emissive.setHex(0xff0000);
-                console.log(DDDM.hoveredModelPart);
-                DDDM.threedmodelContainer.setStyle('cursor', 'pointer');
-            }
-        }
-        else {
-            DDDM.threedmodelContainer.setStyle('cursor', 'inherit');
-            if (DDDM.hoveredModelPart)
-                DDDM.hoveredModelPart.material.emissive.setHex(DDDM.hoveredModelPart.currentHex);
-
-            DDDM.hoveredModelPart = null;
-        }
-    };
-
-    DDDM.findIntersections = function(event) {
-        // calculate 2D mouse position in CanvasRenderer considering canvas size and scroll position
-        var mouseX = ((event.clientX - DDDM.renderer.domElement.offsetParent.offsetLeft + document.body.scrollLeft) / DDDM.renderer.domElement.width) * 2 - 1;
-        var mouseY = -((event.clientY - DDDM.renderer.domElement.offsetParent.offsetTop + document.body.scrollTop) / DDDM.renderer.domElement.height) * 2 + 1;
-
-        var vector = new THREE.Vector3(mouseX, mouseY, 1);
-        DDDM.projector.unprojectVector(vector, DDDM.camera);
-        var raycaster = new THREE.Raycaster(DDDM.camera.position, vector.sub(DDDM.camera.position).normalize());
-        return raycaster.intersectObjects(DDDM.modelParts);
-    };
-
-    DDDM.getModelHierarchy = function(models) {
-
-        for (var i = 0; i < models.length; i++) {
-
-            var model = models[i];
-            if (model.children.length > 0) {
-                //console.log('ModelAst:', model.name);
-
-                DDDM.getModelHierarchy(model.children);
-
-            }
-            else {
-                //console.log('ModelBlatt:', model.name);
-                DDDM.modelParts.push(model);
-            }
-        }
     };
 
     DDDM.start = function() {
@@ -368,7 +280,6 @@ YUI.add('moodle-qtype_threedmodel-threedmodel', function(Y) {
             this.lastTimestamp = Date.now();
         }
     };
-
     DDDM.animate = function() {
         var timestamp = Date.now();
         var frameTime = (timestamp - DDDM.lastTimestamp) * 0.001; // seconds
@@ -394,7 +305,6 @@ YUI.add('moodle-qtype_threedmodel-threedmodel', function(Y) {
         DDDM.animationFrame = requestAnimationFrame(DDDM.animate);
 
     };
-
     DDDM.render = function() {
         DDDM.transControls.update();
         DDDM.renderer.render(DDDM.scene, DDDM.camera);
@@ -404,25 +314,6 @@ YUI.add('moodle-qtype_threedmodel-threedmodel', function(Y) {
         var errorMessage = Y.Node.create(message);
         DDDM.threedmodelContainer.appendChild(errorMessage);
     };
-
-
-    DDDM.toggleObject = function(obj) {
-        console.log(obj);
-
-        if (obj.visible === true) {
-            obj.traverse(function(object) {
-                object.visible = false;
-            });
-        }
-        else {
-            obj.traverse(function(object) {
-                object.visible = true;
-            });
-        }
-    };
-
-
-
 
 
 }, '@VERSION@', {

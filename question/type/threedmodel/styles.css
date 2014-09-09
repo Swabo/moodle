@@ -9,9 +9,14 @@
     z-index:1050;
 }
 
+#threedmodelContainer .dg .cr.function, #threedmodelContainer .dg .cr.function * {
+    cursor:default;
+}
+
 #threedmodelContainer .dg .dg_move_object, #threedmodelContainer .dg .dg_toggle_object {
     line-height: 27px;
     border-left: 1px solid rgb(44,44,44);
     padding: 0px 3px;
+    cursor:pointer;
 }
 
