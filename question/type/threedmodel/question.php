@@ -20,7 +20,7 @@
  *
  * @package    qtype
  * @subpackage threedmodel
- * @copyright  2009 The Open University
+ * @copyright  2014 onwards Daniel Sauer
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 defined('MOODLE_INTERNAL') || die();

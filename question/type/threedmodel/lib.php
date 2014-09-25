@@ -19,8 +19,8 @@
  *
  * @since      2.0
  * @package    qtype
- * @subpackage ddimageortext
- * @copyright  Dongsheng Cai <dongsheng@moodle.com>
+ * @subpackage threedmodel
+ * @copyright  2014 onwards Daniel Sauer
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

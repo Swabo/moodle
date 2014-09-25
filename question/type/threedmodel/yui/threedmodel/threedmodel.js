@@ -80,7 +80,7 @@ YUI.add('moodle-qtype_threedmodel-threedmodel', function(Y) {
     DDDM.initWebGL = function(collada) {
         this.colladaScene = collada.scene;
         this.colladaScene.position.set(0, 0, 0);
-        this.colladaScene.scale.x = this.colladaScene.scale.y = this.colladaScene.scale.z = 1;
+        this.colladaScene.scale.set(1,1,1);
         this.animations = collada.animations;
         this.kfAnimationsLength = this.animations.length;
 
@@ -119,7 +119,7 @@ YUI.add('moodle-qtype_threedmodel-threedmodel', function(Y) {
 
         // SkyCube        
         var skyGeometry = new THREE.BoxGeometry(10000, 10000, 10000);
-        var skyMaterial = new THREE.MeshBasicMaterial({color: 0x999999, side: THREE.BackSide});
+        var skyMaterial = new THREE.MeshBasicMaterial({color: 0x000000, side: THREE.BackSide});
         var skyCube = new THREE.Mesh(skyGeometry, skyMaterial);
         skyCube.position.set(0, 0, 0);
         this.scene.add(skyCube);
@@ -155,10 +155,16 @@ YUI.add('moodle-qtype_threedmodel-threedmodel', function(Y) {
         var guiConfig = {
             resetScene: function() {
                 location.reload();
+            },
+            scaleModel: function() {
+                DDDM.colladaScene.scale.set();
             }
         };
         gui.add(DDDM, 'play_animation').name('Play animations');
         gui.add(guiConfig, 'resetScene').name('Reset Scene');
+        gui.add(DDDM.colladaScene.scale, 'x', 0.01,100).name('Scale Model').onChange(function(value) {
+            DDDM.colladaScene.scale.y = DDDM.colladaScene.scale.z = value;
+        });
         var modelPartsFolder = gui.addFolder('Modelparts');
         Y.one(modelPartsFolder.domElement).addClass('model_parts');
 

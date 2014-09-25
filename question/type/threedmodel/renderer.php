@@ -28,7 +28,7 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Generates the output for threedmodel 'question's.
  *
- * @copyright  2009 The Open University
+ * @copyright  2014 onwards Daniel Sauer
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class qtype_threedmodel_renderer extends qtype_renderer {
@@ -38,7 +38,6 @@ class qtype_threedmodel_renderer extends qtype_renderer {
         global $CFG;
         $model_file_urls = self::get_model_urls($qa, 'threedmodel');
 
-      //  $PAGE->requires->css('/question/type/threedmodel/threedmodel_styles.css');
         $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/question/type/threedmodel/lib/three.min.js'));
         $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/question/type/threedmodel/lib/ColladaLoader.js'));
         $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/question/type/threedmodel/lib/threex.domevents.js'));
@@ -46,10 +45,8 @@ class qtype_threedmodel_renderer extends qtype_renderer {
         $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/question/type/threedmodel/lib/TransformControls.js'));
         $PAGE->requires->js(new moodle_url($CFG->wwwroot . '/question/type/threedmodel/lib/dat.gui.js'));
 
-//        $PAGE->requires->js_init_call('M.qtype_threedmodel.dddm.init', $model_file_urls);
         $PAGE->requires->yui_module('moodle-qtype_threedmodel-threedmodel', 'M.qtype_threedmodel.threedmodel.init', array($model_file_urls));
 
-        //      return '<div>'.''.'</div>';
         return html_writer::tag('div', '', array('id' => 'threedmodelContainer'));
     }
 
@@ -73,7 +70,6 @@ class qtype_threedmodel_renderer extends qtype_renderer {
                     continue;
                 }
                 $baseurl = moodle_url::make_pluginfile_url($question->contextid, $componentname, $filearea, "$qubaid/$slot/{$itemid}", '/', '');
-                // $fullurl = moodle_url::make_pluginfile_url($question->contextid, $componentname, $filearea, "$qubaid/$slot/{$itemid}", '/', $file->get_filename());
                 return array('model_base_url' => $baseurl->out(), 'model_file_name' => $file->get_filename());
             }
         }
